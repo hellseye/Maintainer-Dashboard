@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Public MaintainerCV</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="text/javascript" src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
+</head>
+<body>
+  <div class="topbar"><h1>MaintainerCV — Public Profile</h1></div>
+
+  {% if not data %}
+    <div class="container">
+      <h2>Profile not found for token: {{ token }}</h2>
+      <p>This public profile may not exist or has been removed.</p>
+    </div>
+  {% else %}
+    <div class="container">
+      <h2>{{ data.username }}</h2>
+      <p>Repos scanned: {{ data.summary.total_repos_count }}</p>
+      <p>PRs reviewed: {{ data.summary.total_reviews_seen }}</p>
+      <p>PRs approved: {{ data.summary.total_approvals_by_user }}</p>
+      <p>Users mentored: {{ data.summary.mentored_users_count }}</p>
+
+      <h3>Repo breakdown</h3>
+      <canvas id="repoChartPub"></canvas>
+
+      <h3>Mentorship network</h3>
+      <div id="networkPub" style="height: 400px; border: 1px solid #ddd;"></div>
+    </div>
+
+    <script>
+      const repoData = {{ data.repos | tojson }};
+      const labels = [], approvals = [], changes = [], comments = [];
+      for (const key in repoData) {
+        labels.push(key);
+        approvals.push(repoData[key].approvals || 0);
+        changes.push(repoData[key].changes || 0);
+        comments.push(repoData[key].comments || 0);
+      }
+      const ctx = document.getElementById('repoChartPub').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: { labels: labels, datasets: [ { label:'Approvals', data: approvals }, { label:'Changes', data: changes } ] },
+        options: { indexAxis: 'y' }
+      });
+
+      const mentorship = {{ data.mentorship | tojson }};
+      const nodes = [{ id: '{{ data.username }}', label: '{{ data.username }}', color: '#6aa84f' }];
+      const edges = [];
+      for (const [user, count] of Object.entries(mentorship)) {
+        nodes.push({ id: user, label: user });
+        edges.push({ from: '{{ data.username }}', to: user, label: String(count), width: Math.min(10,1+count/2) });
+      }
+      const container = document.getElementById('networkPub');
+      const data_vis = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+      const network = new vis.Network(container, data_vis, {});
+    </script>
+  {% endif %}
+</body>
+</html>

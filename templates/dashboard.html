@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ data.username }} - Maintainer Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+  body {
+    font-family: 'Inter', sans-serif;
+    background: radial-gradient(ellipse at bottom, #0b0c1a 0%, #05060a 100%);
+    color: white;
+    margin: 0;
+    padding: 0 0 60px;
+    overflow-x: hidden;
+  }
+
+  /* ====== Glass Containers ====== */
+  .glass {
+    background: rgba(20, 22, 40, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+  }
+
+  /* ====== Topbar ====== */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(20, 22, 40, 0.7);
+    backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 5%;
+  }
+
+  .topbar h1 {
+    font-weight: 800;
+    font-size: 1.6rem;
+    background: linear-gradient(to right, #a855f7, #60a5fa);
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  .btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .btn:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.4);
+  }
+
+  /* ===== Summary Card ===== */
+  .summary {
+    margin: 2rem 5%;
+    padding: 2rem;
+  }
+
+  .summary h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .summary p {
+    font-size: 1rem;
+    color: #b3b3cc;
+    margin: 0.4rem 0;
+  }
+
+  .summary strong {
+    color: #fff;
+  }
+
+  /* ===== Repo Section ===== */
+  h3.section-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 2rem 5% 1rem;
+    color: #a855f7;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 0.4rem;
+  }
+
+  #repoSelect {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    margin-left: 10px;
+    cursor: pointer;
+  }
+
+  #repoDetailsContainer {
+    margin: 1.5rem 5%;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .repo-card {
+    padding: 1.5rem;
+    border-radius: 15px;
+    transition: 0.3s;
+  }
+
+  .repo-card:hover {
+    border-color: rgba(255,255,255,0.3);
+    box-shadow: 0 0 20px rgba(168,85,247,0.2);
+  }
+
+  .repo-card h4 {
+    color: #60a5fa;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+  }
+
+  .repo-card p {
+    color: #b0b0c4;
+    font-size: 0.95rem;
+    margin: 0.3rem 0;
+  }
+
+  .repo-card a {
+    color: #a855f7;
+    text-decoration: none;
+  }
+
+  .repo-card a:hover {
+    text-decoration: underline;
+  }
+
+  /* ===== Mentorship Logs ===== */
+  .mentorship-card {
+    margin: 1rem 0;
+    padding: 1.5rem;
+  }
+
+  .mentorship-card h4 {
+    color: #60a5fa;
+    font-weight: 600;
+  }
+
+  .mentorship-card a {
+    color: #a855f7;
+  }
+
+  /* ===== Chart Section ===== */
+  .charts-container {
+    margin: 2rem 5%;
+    padding: 2rem;
+    height: 400px;
+  }
+
+  canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* ===== Background Glow Blobs ===== */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.25;
+    animation: float 18s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  @keyframes float {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-40px, 20px) scale(1.1); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- Glowing Background -->
+<div class="blob bg-purple-700 w-80 h-80 top-0 left-0 -translate-x-1/2 -translate-y-1/2"></div>
+<div class="blob bg-blue-700 w-96 h-96 bottom-0 right-0 translate-x-1/2 translate-y-1/2"></div>
+
+<!-- ===== Topbar ===== -->
+<div class="topbar glass">
+  <h1><i class="fas fa-chart-bar"></i> Maintainer Dashboard</h1>
+  <div class="flex gap-3">
+    {# <a href="{{ url_for('download_cv') }}" class="btn">Download CV</a> #}
+
+    <a href="{{ url_for('logout') }}" class="btn"><i class="fas fa-sign-out-alt mr-2"></i> Logout</a>
+  </div>
+</div>
+
+<!-- ===== Summary ===== -->
+<div class="summary glass">
+  <h2>Welcome, {{ data.username }} 👋</h2>
+  <p>Total repositories scanned: <strong>{{ data.summary.total_repos_count }}</strong></p>
+  <p>PRs reviewed: <strong>{{ data.summary.total_reviews_seen }}</strong></p>
+  <p>Approved PRs: <span style="color:#58D683;"><strong>{{ data.summary.total_approvals_by_user }}</strong></span></p>
+  <p>Changes requested: <span style="color:#EC7063;"><strong>{{ data.summary.total_changes_by_user }}</strong></span></p>
+  <p>Users mentored: <strong>{{ data.summary.mentored_users_count }}</strong></p>
+  
+</div>
+
+<!-- ===== Repo Section ===== -->
+<h3 class="section-title"><i class="fas fa-database"></i> Repository Details</h3>
+<div style="margin:0 5% 10px;">
+  <label for="repoSelect"><i class="fas fa-filter"></i> Filter by Repository:</label>
+  <select id="repoSelect">
+    <option value="all">-- All Repos --</option>
+    {% for repo_name, repo in data.repos.items() %}
+      <option value="{{ repo_name }}">{{ repo_name }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<div id="repoDetailsContainer">
+  {% for repo_name, repo in data.repos.items() %}
+  <div class="repo-card glass" id="repo-{{ repo_name }}">
+    <h4><i class="fas fa-code-branch"></i> {{ repo_name }}</h4>
+    <p>Approvals: <span style="color:#58D683;">{{ repo.approvals }}</span></p>
+    <p>Changes Requested: <span style="color:#EC7063;">{{ repo.changes }}</span></p>
+    <p>Comments: {{ repo.comments }}</p>
+    <p>Total Reviews: {{ repo.reviews_by_user }}</p>
+    <p>Top issue: 
+      {% if repo.get('most_important_issue') and repo['most_important_issue'].get('title') %}
+        <a href="{{ repo['most_important_issue']['url'] }}" target="_blank">
+          {{ repo['most_important_issue']['title'] | truncate(50, True) }}
+        </a>
+        ({{ repo['most_important_issue']['comments'] }} comments)
+      {% else %}None{% endif %}
+    </p>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ===== Mentorship Section ===== -->
+<h3 class="section-title"><i class="fas fa-users"></i> Mentorship Logs</h3>
+<div style="margin:0 5%;">
+  {% for user, logs in data.mentorship.items() %}
+  <div class="mentorship-card glass">
+    <h4>{{ user }}</h4>
+    <ul>
+      {% for log in logs %}
+      <li>
+        <a href="{{ log.pr_url }}" target="_blank">{{ log.pr_title }}</a> — 
+        <span style="color:
+          {% if 'APPROVED' in log.review_state %}
+            #58D683
+          {% elif 'CHANGES_REQUESTED' in log.review_state %}
+            #EC7063
+          {% else %}
+            #a855f7
+          {% endif %};
+          font-weight:700;">
+          {{ log.review_state }}
+        </span> on {{ log.timestamp }}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ====== ANALYTICS SECTIONS ====== -->
+<h3 class="section-title"><i class="fas fa-chart-line"></i> Maintainer Analytics Overview</h3>
+
+<div class="charts-container glass">
+  <h4 class="text-xl font-semibold mb-4 text-white"><i class="fas fa-chart-line mr-2"></i> Repo Activity Overview</h4>
+  <canvas id="combinedChart"></canvas>
+</div>
+
+
+<script>
+// ================= REPO FILTER =================
+const repoSelect = document.getElementById('repoSelect');
+const repoDetailsContainer = document.getElementById('repoDetailsContainer');
+repoSelect.addEventListener('change', function(){
+  const selected = this.value;
+  const repoCards = repoDetailsContainer.querySelectorAll('.repo-card');
+  repoCards.forEach(card=>{
+    card.style.display = selected==='all'?'block':card.id==='repo-'+selected?'block':'none';
+  });
+});
+
+// ================== COMMON CHART BUILDER ==================
+function createTimelineChart(ctx, label, data, color1, color2) {
+  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, color1);
+  gradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: Object.keys(repoData),
+      datasets: [{
+        label: label,
+        data: data,
+        fill: true,
+        backgroundColor: gradient,
+        borderColor: color1,
+        borderWidth: 3,
+        tension: 0.35,
+        pointRadius: 4,
+        pointBackgroundColor: color1,
+        pointBorderColor: '#fff',
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#fff' } },
+        title: { display: false }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#b3b3cc' },
+          grid: { color: 'rgba(255,255,255,0.05)' }
+        },
+        y: {
+          ticks: { color: '#b3b3cc' },
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+// ================== DATA SETUP ==================
+const repoData = {{ data.repos | tojson }};
+const labels = Object.keys(repoData);
+
+// Reviews
+const reviews = labels.map(r => (repoData[r].approvals || 0) + (repoData[r].changes || 0) + (repoData[r].comments || 0));
+
+// Issues (dynamic)
+const issues = labels.map(r => repoData[r].issues_count || 0);
+
+// Docs updates (dynamic)
+const docs = labels.map(r => repoData[r].docs_updates || 0);
+
+// Mentorship sessions (dynamic)
+const mentorship = labels.map(r => repoData[r].mentorship_sessions || 0);
+
+
+const ctx = document.getElementById('combinedChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [
+            { label: 'Reviews', data: reviews, borderColor: 'rgba(168,85,247,0.9)', backgroundColor: 'rgba(168,85,247,0.2)', fill: true },
+            { label: 'Issues', data: issues, borderColor: 'rgba(96,165,250,0.9)', backgroundColor: 'rgba(96,165,250,0.2)', fill: true },
+            { label: 'Docs Updates', data: docs, borderColor: 'rgba(16,185,129,0.9)', backgroundColor: 'rgba(16,185,129,0.2)', fill: true },
+            { label: 'Mentorship', data: mentorship, borderColor: 'rgba(244,114,182,0.9)', backgroundColor: 'rgba(244,114,182,0.2)', fill: true }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#fff' } } },
+        scales: {
+            x: { ticks: { color: '#b3b3cc' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            y: { ticks: { color: '#b3b3cc' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
+        }
+    }
+});
+
+</script>
+</body>
+</html>

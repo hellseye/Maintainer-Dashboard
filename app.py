@@ -1,0 +1,154 @@
+import os
+import json
+from dotenv import load_dotenv
+from flask import Flask, redirect, url_for, render_template, session, flash
+from flask_dance.contrib.github import make_github_blueprint, github
+from github import Github as PyGithub
+
+load_dotenv()
+
+app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY") or "dev-secret"
+
+GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
+BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:5000")
+
+github_bp = make_github_blueprint(
+    client_id=GITHUB_CLIENT_ID,
+    client_secret=GITHUB_CLIENT_SECRET,
+    scope="repo"
+)
+app.register_blueprint(github_bp, url_prefix="/login")
+
+# ------------------- Helper Functions -------------------
+
+def gather_user_data(pygh_user, username):
+    data = {"username": username, "repos": {}, "summary": {}, "mentorship": {}}
+    total_repos = 0
+    total_reviews_seen = 0
+    total_approvals_by_user = 0
+    total_changes_by_user = 0
+
+    repos = pygh_user.get_repos()
+    for repo in repos:
+        try:
+            repo_name = repo.full_name
+        except Exception:
+            continue
+
+        approvals = 0
+        changes = 0
+        comments = 0
+        reviews_by_user = 0
+
+        try:
+            pulls = list(repo.get_pulls(state="all"))
+        except Exception:
+            pulls = []
+
+        for pr in pulls:
+            try:
+                reviews = list(pr.get_reviews())
+            except Exception:
+                reviews = []
+
+            for review in reviews:
+                state_lower = (review.state or "").lower()
+                reviewer = getattr(review.user, "login", None)
+
+                if state_lower == "approved":
+                    approvals += 1
+                elif state_lower in ("changes_requested", "request_changes"):
+                    changes += 1
+                else:
+                    comments += 1
+
+        for pr in pulls:
+            try:
+                reviews = list(pr.get_reviews())
+            except Exception:
+                reviews = []
+
+            for review in reviews:
+                reviewer = getattr(review.user, "login", None)
+                state_lower = (review.state or "").lower()
+
+                if reviewer == username:
+                    reviews_by_user += 1
+                    total_reviews_seen += 1
+                    if state_lower == "approved":
+                        total_approvals_by_user += 1
+                    elif state_lower in ("changes_requested", "request_changes"):
+                        total_changes_by_user += 1
+
+                    pr_author = getattr(pr.user, "login", None)
+                    if pr_author and pr_author != username:
+                        data["mentorship"].setdefault(pr_author, 0)
+                        data["mentorship"][pr_author] += 1
+
+        data["repos"][repo_name] = {
+            "repo_name": repo_name,
+            "approvals": approvals,
+            "changes": changes,
+            "comments": comments,
+            "reviews_by_user": reviews_by_user,
+        }
+        total_repos += 1
+
+    data["summary"] = {
+        "total_repos_count": total_repos,
+        "total_reviews_seen": total_reviews_seen,
+        "total_approvals_by_user": total_approvals_by_user,
+        "total_changes_by_user": total_changes_by_user,
+        "mentored_users_count": len(data["mentorship"])
+    }
+    return data
+
+# ------------------- Routes -------------------
+
+@app.route("/")
+def index():
+    if github.authorized:
+        return redirect(url_for("dashboard"))
+    return render_template("login.html")
+
+
+@app.route("/dashboard")
+def dashboard():
+    if not github.authorized:
+        return redirect(url_for("github.login"))
+
+    resp = github.get("/user")
+    if not resp.ok:
+        flash("Failed to fetch user info from GitHub", "error")
+        return redirect(url_for("index"))
+
+    user_json = resp.json()
+    username = user_json.get("login")
+
+    token = github.token["access_token"]
+    pygh = PyGithub(token)
+
+    try:
+        pygh_user = pygh.get_user(username)
+    except Exception as e:
+        flash("Failed to initialize PyGithub user: " + str(e), "error")
+        return redirect(url_for("index"))
+
+    payload = gather_user_data(pygh_user, username)
+    session["profile_payload"] = payload
+
+    return render_template("dashboard.html", data=payload, base_url=BASE_URL)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("index"))
+
+
+# ------------------- Run App -------------------
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
