@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Maintainer Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+  /* 🔹 Feature Pills Enhanced Hover Colors */
+.feature-pill {
+  transition: all 0.3s ease;
+}
+
+/* Common hover animation */
+.feature-pill:hover {
+
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* 🎯 Individual color glows */
+.reviewColor:hover {
+  color: #60a5fa; /* Light Blue text */
+  background-color: rgba(96, 165, 250, 0.15);
+  box-shadow: 0 0 15px rgba(96, 165, 250, 0.5);
+}
+
+.triageColor:hover {
+  color: #ff4f81; /* Pink text */
+  background-color: rgba(255, 79, 129, 0.15);
+  box-shadow: 0 0 15px rgba(255, 79, 129, 0.5);
+}
+
+.mentorColor:hover {
+  color: #a855f7; /* Purple text */
+  background-color: rgba(168, 85, 247, 0.15);
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
+}
+
+.docsColor:hover {
+  color: #10b981; /* Green text */
+  background-color: rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+}
+
+
+  body {
+    margin: 0;
+    overflow: hidden;
+    height: 100vh;
+    font-family: 'Inter', sans-serif;
+    background: #0b0c1a;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  canvas { position: fixed; top: 0; left: 0; z-index: 0; }
+
+  .glass {
+    background: rgba(20, 22, 40, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 3rem 2.5rem;
+    width: 580px;
+    max-width: 95%;
+    text-align: center;
+    z-index: 10;
+    position: relative;
+  }
+
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.25;
+    animation: float 20s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+
+  @keyframes float {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-20px, 20px) scale(1.1); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: white;
+    animation: twinkle 3s infinite ease-in-out;
+    will-change: opacity, transform;
+  }
+
+  @keyframes twinkle {
+    0%,100% { opacity: 0.1; transform: scale(0.8); }
+    50% { opacity: 0.8; transform: scale(1.2); }
+  }
+
+  .rotate3d { 
+    animation: rotate3d 10s linear infinite;
+    transform-style: preserve-3d;
+  }
+
+  @keyframes rotate3d {
+    from { transform: rotateY(0deg); }
+    to { transform: rotateY(360deg); }
+  }
+
+  .github-logo-white {
+    filter: invert(1) brightness(1.5);
+  }
+
+  .btn-github, .feature-pill {
+      transition: all 0.3s ease;
+  }
+
+  .btn-github:hover { 
+      transform: scale(1.05); 
+      box-shadow: 0 0 25px rgba(255,255,255,0.15);
+      border-color: rgba(255, 255, 255, 0.7);
+  }
+
+  .feature-pill:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.5);
+  }
+</style>
+</head>
+
+<body>
+
+<canvas id="galaxy"></canvas>
+
+<!-- Floating blobs -->
+<div class="blob bg-purple-600 w-80 h-80 top-0 left-0 -translate-x-1/2 -translate-y-1/2"></div>
+<div class="blob bg-blue-600 w-96 h-96 bottom-0 right-0 translate-x-1/2 translate-y-1/2"></div>
+
+<!-- Glass Login Card -->
+<div class="glass">
+    <div class="rotate3d mb-6">
+      <img src="https://causal-aqua-j7qncoynlx.edgeone.app/logo-removebg-preview.png" alt="Dashboard Logo" class="w-24 h-24 mx-auto drop-shadow-lg">
+    </div>
+    <h1 class="text-5xl font-extrabold mb-6 tracking-tight">Maintainer Dashboard</h1>
+
+    <div class="flex justify-center items-center gap-4 mb-6">
+        <div class="feature-pill bg-gray-800/50 border border-gray-700 rounded-full px-5 py-2 text-sm font-medium text-gray-300 reviewColor">REVIEWS</div>
+        <div class="feature-pill bg-gray-800/50 border border-gray-700 rounded-full px-5 py-2 text-sm font-medium text-gray-300 triageColor">TRIAGE</div>
+        <div class="feature-pill bg-gray-800/50 border border-gray-700 rounded-full px-5 py-2 text-sm font-medium text-gray-300 mentorColor">MENTORSHIP</div>
+        <div class="feature-pill bg-gray-800/50 border border-gray-700 rounded-full px-5 py-2 text-sm font-medium text-gray-300 docsColor">DOCS</div>
+    </div>
+    
+    <p class="text-base text-gray-400 max-w-lg mx-auto mb-6 leading-relaxed">
+        Track all maintainer activities: PR reviews, issue triage, mentorship, docs updates, and more. Share your contributions as a dynamic, visible profile. Celebrate milestones and showcase the full scope of your work.
+    </p>
+
+     <a href="{{ url_for('github.login') }}" class="btn-github inline-flex items-center justify-center gap-3 bg-gray-900 hover:bg-gray-800 text-white py-3 px-8 rounded-full font-semibold shadow-lg border border-gray-600 mb-8">
+            Login with GitHub
+        </a>
+
+    <p class="text-gray-200 font-semibold">By continuing, you agree to authenticate via GitHub OAuth</p>
+
+    <p class="text-gray-200 font-semibold">Open source maintainers deserve recognition</p>
+</div>
+
+<!-- Stars & Galaxy Script -->
+<script>
+const canvas = document.getElementById("galaxy");
+if (canvas) {
+    const ctx = canvas.getContext("2d");
+    let w = (canvas.width = window.innerWidth);
+    let h = (canvas.height = window.innerHeight);
+
+    // Create static stars once for DOM
+    const staticStarCount = 120;
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < staticStarCount; i++) {
+        const star = document.createElement("div");
+        const size = 0.5 + Math.random() * 1.5;
+        star.classList.add("star");
+        Object.assign(star.style, {
+            top: `${Math.random() * 100}vh`,
+            left: `${Math.random() * 100}vw`,
+            width: `${size}px`,
+            height: `${size}px`,
+            animationDuration: `${2 + Math.random() * 3}s`,
+            animationDelay: `${Math.random() * 3}s`,
+            opacity: 0.2 + Math.random() * 0.6,
+        });
+        frag.appendChild(star);
+    }
+    document.body.appendChild(frag);
+
+    // Galaxy star logic
+    const galaxyStars = Array.from({ length: 800 }, () => ({
+        angle: Math.random() * 2 * Math.PI,
+        radius: Math.sqrt(Math.random()) * (Math.min(w, h) / 3) + 40,
+        size: Math.random() * 1.2,
+        alpha: 0.3 + Math.random() * 0.7,
+        speed: 0.0003 + Math.random() * 0.0004
+    }));
+
+    let rotation = 0;
+    function draw() {
+        ctx.fillStyle = "#0b0c1a";
+        ctx.fillRect(0, 0, w, h);
+        rotation += 0.0005;
+
+        for (const s of galaxyStars) {
+            s.angle += s.speed;
+            const x = w / 2 + s.radius * Math.cos(s.angle + rotation);
+            const y = h / 2 + s.radius * Math.sin(s.angle + rotation);
+            ctx.beginPath();
+            ctx.arc(x, y, s.size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+            ctx.fill();
+        }
+        requestAnimationFrame(draw);
+    }
+
+    draw();
+    window.addEventListener("resize", () => {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+    });
+}
+</script>
+
+</body>
+</html>
