@@ -31,20 +31,19 @@ def gather_user_data(pygh_user, username):
     total_changes_by_user = 0
     total_prs_raised = 0
 
-    repos = pygh_user.get_repos()  # gets all the repos of the user
+    repos = pygh_user.get_repos()  # Get all user repos
 
     for repo in repos:
         try:
             repo_name = repo.full_name
         except Exception:
-            continue
+            continue  # skip if repo name not accessible
 
         approvals = 0
         changes = 0
         comments = 0
         reviews_by_user = 0
         pr_raised = 0
-        
 
         # ------------------- Pull Requests -------------------
         try:
@@ -62,15 +61,13 @@ def gather_user_data(pygh_user, username):
 
             for review in reviews:
                 state_lower = (review.state or "").lower()
-                reviewer = getattr(review.user, "login", None)
-
                 if state_lower == "approved":
                     approvals += 1
                 elif state_lower in ("changes_requested", "request_changes"):
                     changes += 1
                 else:
                     comments += 1
-                
+
         total_prs_raised += pr_raised
 
         # ------------------- Reviews by the user -------------------
@@ -97,32 +94,65 @@ def gather_user_data(pygh_user, username):
                         data["mentorship"].setdefault(pr_author, 0)
                         data["mentorship"][pr_author] += 1
 
-        # ------------------- Most important issue -------------------
+        # ------------------- Most Important Issue -------------------
         try:
             issues = list(repo.get_issues(state="open", sort="comments", direction="desc"))
             if issues:
-                most_important = issues[0]
+                top_issue = issues[0]
                 most_important_issue = {
-                    "title": most_important.title,
-                    "url": most_important.html_url,
-                    "comments": most_important.comments
+                    "title": top_issue.title,
+                    "url": top_issue.html_url,
+                    "comments": top_issue.comments
                 }
             else:
                 most_important_issue = None
         except Exception:
             most_important_issue = None
 
-        # ------------------- Save repo data -------------------
+        # ------------------- Safe Data Retrieval -------------------
+        # Count total issues safely
+        try:
+            total_issues = len(list(repo.get_issues(state="all")))
+        except Exception:
+            total_issues = 0
+
+        # Count docs commits safely (skip empty repos)
+        try:
+            docs_updates = len(list(repo.get_commits(path="docs")))
+        except Exception:
+            docs_updates = 0  # empty repos cause 409 error, so we skip
+
+        # Mentorship sessions (for this user)
+        mentorship_sessions = data["mentorship"].get(username, 0)
+
+        # ------------------- Save Repo Data -------------------
         data["repos"][repo_name] = {
             "repo_name": repo_name,
             "approvals": approvals,
+            "changes": changes,
             "comments": comments,
             "pr_raised": pr_raised,
             "reviews_by_user": reviews_by_user,
+            "issues_count": total_issues,
+            "docs_updates": docs_updates,
+            "mentorship_sessions": mentorship_sessions,
             "most_important_issue": most_important_issue
         }
 
         total_repos += 1
+
+    # ------------------- Summary -------------------
+    data["summary"] = {
+        "total_repos_count": total_repos,
+        "pr_raised": total_prs_raised,
+        "total_reviews_seen": total_reviews_seen,
+        "total_approvals_by_user": total_approvals_by_user,
+        "total_changes_by_user": total_changes_by_user,
+        "mentored_users_count": len(data["mentorship"])
+    }
+
+    return data
+
 
     # ------------------- Summary -------------------
     data["summary"] = {
