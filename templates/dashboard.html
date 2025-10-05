@@ -212,7 +212,7 @@
 <div class="summary glass">
   <h2>Welcome, {{ data.username }} 👋</h2>
   <p>Total repositories scanned: <strong>{{ data.summary.total_repos_count }}</strong></p>
-  <p>PRs reviewed: <strong>{{ data.summary.total_reviews_seen }}</strong></p>
+  <p>Total Prs raised: <strong>{{ data.summary.pr_raised }}</strong></p>
   <p>Approved PRs: <span style="color:#58D683;"><strong>{{ data.summary.total_approvals_by_user }}</strong></span></p>
   <p>Changes requested: <span style="color:#EC7063;"><strong>{{ data.summary.total_changes_by_user }}</strong></span></p>
   <p>Users mentored: <strong>{{ data.summary.mentored_users_count }}</strong></p>
@@ -236,7 +236,7 @@
   <div class="repo-card glass" id="repo-{{ repo_name }}">
     <h4><i class="fas fa-code-branch"></i> {{ repo_name }}</h4>
     <p>Approvals: <span style="color:#58D683;">{{ repo.approvals }}</span></p>
-    <p>Changes Requested: <span style="color:#EC7063;">{{ repo.changes }}</span></p>
+    <p>PRs receved: <strong style="color:#EC7063;">{{ repo.pr_raised }}</strong></p>
     <p>Comments: {{ repo.comments }}</p>
     <p>Total Reviews: {{ repo.reviews_by_user }}</p>
     <p>Top issue: 
