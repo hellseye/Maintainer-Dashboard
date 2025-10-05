@@ -4,8 +4,12 @@
 <meta charset="UTF-8">
 <title>{{ data.username }} - Maintainer Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- TailwindCSS & Chart.js -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Fonts & Icons -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
@@ -19,7 +23,7 @@
     overflow-x: hidden;
   }
 
-  /* ====== Glass Containers ====== */
+  /* ===== Glass Containers ===== */
   .glass {
     background: rgba(20, 22, 40, 0.65);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -28,7 +32,7 @@
     border-radius: 20px;
   }
 
-  /* ====== Topbar ====== */
+  /* ===== Topbar ===== */
   .topbar {
     position: sticky;
     top: 0;
@@ -148,21 +152,6 @@
     text-decoration: underline;
   }
 
-  /* ===== Mentorship Logs ===== */
-  .mentorship-card {
-    margin: 1rem 0;
-    padding: 1.5rem;
-  }
-
-  .mentorship-card h4 {
-    color: #60a5fa;
-    font-weight: 600;
-  }
-
-  .mentorship-card a {
-    color: #a855f7;
-  }
-
   /* ===== Chart Section ===== */
   .charts-container {
     margin: 2rem 5%;
@@ -189,11 +178,10 @@
     50% { transform: translate(-40px, 20px) scale(1.1); }
     100% { transform: translate(0, 0) scale(1); }
   }
-
 </style>
 </head>
-<body>
 
+<body>
 <!-- Glowing Background -->
 <div class="blob bg-purple-700 w-80 h-80 top-0 left-0 -translate-x-1/2 -translate-y-1/2"></div>
 <div class="blob bg-blue-700 w-96 h-96 bottom-0 right-0 translate-x-1/2 translate-y-1/2"></div>
@@ -202,21 +190,18 @@
 <div class="topbar glass">
   <h1><i class="fas fa-chart-bar"></i> Maintainer Dashboard</h1>
   <div class="flex gap-3">
-    {# <a href="{{ url_for('download_cv') }}" class="btn">Download CV</a> #}
-
     <a href="{{ url_for('logout') }}" class="btn"><i class="fas fa-sign-out-alt mr-2"></i> Logout</a>
   </div>
 </div>
 
-<!-- ===== Summary ===== -->
+<!-- ===== Summary Section ===== -->
 <div class="summary glass">
   <h2>Welcome, {{ data.username }} 👋</h2>
   <p>Total repositories scanned: <strong>{{ data.summary.total_repos_count }}</strong></p>
-  <p>Total Prs raised: <strong>{{ data.summary.pr_raised }}</strong></p>
+  <p>Total PRs raised: <strong>{{ data.summary.pr_raised }}</strong></p>
   <p>Approved PRs: <span style="color:#58D683;"><strong>{{ data.summary.total_approvals_by_user }}</strong></span></p>
   <p>Changes requested: <span style="color:#EC7063;"><strong>{{ data.summary.total_changes_by_user }}</strong></span></p>
   <p>Users mentored: <strong>{{ data.summary.mentored_users_count }}</strong></p>
-  
 </div>
 
 <!-- ===== Repo Section ===== -->
@@ -236,10 +221,10 @@
   <div class="repo-card glass" id="repo-{{ repo_name }}">
     <h4><i class="fas fa-code-branch"></i> {{ repo_name }}</h4>
     <p>Approvals: <span style="color:#58D683;">{{ repo.approvals }}</span></p>
-    <p>PRs receved: <strong style="color:#EC7063;">{{ repo.pr_raised }}</strong></p>
+    <p>PRs received: <strong style="color:#EC7063;">{{ repo.pr_raised }}</strong></p>
     <p>Comments: {{ repo.comments }}</p>
     <p>Total Reviews: {{ repo.reviews_by_user }}</p>
-    <p>Top issue: 
+    <p>Top issue:
       {% if repo.get('most_important_issue') and repo['most_important_issue'].get('title') %}
         <a href="{{ repo['most_important_issue']['url'] }}" target="_blank">
           {{ repo['most_important_issue']['title'] | truncate(50, True) }}
@@ -251,45 +236,18 @@
   {% endfor %}
 </div>
 
-<!-- ===== Mentorship Section ===== -->
-<h3 class="section-title"><i class="fas fa-users"></i> Mentorship Logs</h3>
-<div style="margin:0 5%;">
-  {% for user, logs in data.mentorship.items() %}
-  <div class="mentorship-card glass">
-    <h4>{{ user }}</h4>
-    <ul>
-      {% for log in logs %}
-      <li>
-        <a href="{{ log.pr_url }}" target="_blank">{{ log.pr_title }}</a> — 
-        <span style="color:
-          {% if 'APPROVED' in log.review_state %}
-            #58D683
-          {% elif 'CHANGES_REQUESTED' in log.review_state %}
-            #EC7063
-          {% else %}
-            #a855f7
-          {% endif %};
-          font-weight:700;">
-          {{ log.review_state }}
-        </span> on {{ log.timestamp }}
-      </li>
-      {% endfor %}
-    </ul>
-  </div>
-  {% endfor %}
-</div>
-
-<!-- ====== ANALYTICS SECTIONS ====== -->
+<!-- ===== Analytics Section ===== -->
 <h3 class="section-title"><i class="fas fa-chart-line"></i> Maintainer Analytics Overview</h3>
-
 <div class="charts-container glass">
   <h4 class="text-xl font-semibold mb-4 text-white"><i class="fas fa-chart-line mr-2"></i> Repo Activity Overview</h4>
   <canvas id="combinedChart"></canvas>
 </div>
 
-
+<!-- ===== JS: Repo Filter + Chart ===== -->
 <script>
-// ================= REPO FILTER =================
+/* =====================================================
+   REPOSITORY FILTER FUNCTION
+===================================================== */
 const repoSelect = document.getElementById('repoSelect');
 const repoDetailsContainer = document.getElementById('repoDetailsContainer');
 repoSelect.addEventListener('change', function(){
@@ -300,92 +258,79 @@ repoSelect.addEventListener('change', function(){
   });
 });
 
-// ================== COMMON CHART BUILDER ==================
-function createTimelineChart(ctx, label, data, color1, color2) {
+/* =====================================================
+   COMMON CHART BUILDER FUNCTION
+===================================================== */
+function createTimelineChart(ctx, label, data, color1) {
   const gradient = ctx.createLinearGradient(0, 0, 0, 400);
   gradient.addColorStop(0, color1);
   gradient.addColorStop(1, 'rgba(0,0,0,0)');
-
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: Object.keys(repoData),
-      datasets: [{
-        label: label,
-        data: data,
-        fill: true,
-        backgroundColor: gradient,
-        borderColor: color1,
-        borderWidth: 3,
-        tension: 0.35,
-        pointRadius: 4,
-        pointBackgroundColor: color1,
-        pointBorderColor: '#fff',
-        pointHoverRadius: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { labels: { color: '#fff' } },
-        title: { display: false }
-      },
-      scales: {
-        x: {
-          ticks: { color: '#b3b3cc' },
-          grid: { color: 'rgba(255,255,255,0.05)' }
-        },
-        y: {
-          ticks: { color: '#b3b3cc' },
-          grid: { color: 'rgba(255,255,255,0.05)' },
-          beginAtZero: true
-        }
-      }
-    }
-  });
+  return {
+    label: label,
+    data: data,
+    fill: true,
+    backgroundColor: gradient,
+    borderColor: color1,
+    borderWidth: 3,
+    tension: 0.35,
+    pointRadius: 4,
+    pointBackgroundColor: color1,
+    pointBorderColor: '#fff',
+    pointHoverRadius: 6
+  };
 }
 
-// ================== DATA SETUP ==================
+/* =====================================================
+   DATA PREPARATION
+===================================================== */
 const repoData = {{ data.repos | tojson }};
 const labels = Object.keys(repoData);
 
-// Reviews
-const reviews = labels.map(r => (repoData[r].approvals || 0) + (repoData[r].changes || 0) + (repoData[r].comments || 0));
+// 🟣 Reviews (approvals + changes + comments)
+const reviews = labels.map(r =>
+  (repoData[r].approvals || 0) +
+  (repoData[r].changes || 0) +
+  (repoData[r].comments || 0)
+);
 
-// Issues (dynamic)
+// 🔵 Issues (dynamic)
 const issues = labels.map(r => repoData[r].issues_count || 0);
 
-// Docs updates (dynamic)
+// 🟢 Docs updates (dynamic)
 const docs = labels.map(r => repoData[r].docs_updates || 0);
 
-// Mentorship sessions (dynamic)
+// 💗 Mentorship (dynamic)
 const mentorship = labels.map(r => repoData[r].mentorship_sessions || 0);
 
-
+/* =====================================================
+   CHART INITIALIZATION
+===================================================== */
 const ctx = document.getElementById('combinedChart').getContext('2d');
 new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: labels,
-        datasets: [
-            { label: 'Reviews', data: reviews, borderColor: 'rgba(168,85,247,0.9)', backgroundColor: 'rgba(168,85,247,0.2)', fill: true },
-            { label: 'Issues', data: issues, borderColor: 'rgba(96,165,250,0.9)', backgroundColor: 'rgba(96,165,250,0.2)', fill: true },
-            { label: 'Docs Updates', data: docs, borderColor: 'rgba(16,185,129,0.9)', backgroundColor: 'rgba(16,185,129,0.2)', fill: true },
-            { label: 'Mentorship', data: mentorship, borderColor: 'rgba(244,114,182,0.9)', backgroundColor: 'rgba(244,114,182,0.2)', fill: true }
-        ]
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [
+      createTimelineChart(ctx, 'Reviews', reviews, 'rgba(168,85,247,0.9)'),
+      createTimelineChart(ctx, 'Issues', issues, 'rgba(96,165,250,0.9)'),
+      createTimelineChart(ctx, 'Docs Updates', docs, 'rgba(16,185,129,0.9)'),
+      createTimelineChart(ctx, 'Mentorship', mentorship, 'rgba(244,114,182,0.9)')
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: '#fff' } },
+      title: { display: false }
     },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: '#fff' } } },
-        scales: {
-            x: { ticks: { color: '#b3b3cc' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-            y: { ticks: { color: '#b3b3cc' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
-        }
-    }
+    scales: {
+      x: { ticks: { color: '#b3b3cc' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+      y: { ticks: { color: '#b3b3cc' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
+    },
+    elements: { line: { tension: 0.35 }, point: { radius: 4 } }
+  }
 });
-
 </script>
 </body>
 </html>
