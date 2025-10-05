@@ -29,8 +29,10 @@ def gather_user_data(pygh_user, username):
     total_reviews_seen = 0
     total_approvals_by_user = 0
     total_changes_by_user = 0
+    total_prs_raised = 0
 
-    repos = pygh_user.get_repos()
+    repos = pygh_user.get_repos()  # gets all the repos of the user
+
     for repo in repos:
         try:
             repo_name = repo.full_name
@@ -41,7 +43,10 @@ def gather_user_data(pygh_user, username):
         changes = 0
         comments = 0
         reviews_by_user = 0
+        pr_raised = 0
+        
 
+        # ------------------- Pull Requests -------------------
         try:
             pulls = list(repo.get_pulls(state="all"))
         except Exception:
@@ -53,6 +58,8 @@ def gather_user_data(pygh_user, username):
             except Exception:
                 reviews = []
 
+            pr_raised += 1  # increment PR count
+
             for review in reviews:
                 state_lower = (review.state or "").lower()
                 reviewer = getattr(review.user, "login", None)
@@ -63,7 +70,10 @@ def gather_user_data(pygh_user, username):
                     changes += 1
                 else:
                     comments += 1
+                
+        total_prs_raised += pr_raised
 
+        # ------------------- Reviews by the user -------------------
         for pr in pulls:
             try:
                 reviews = list(pr.get_reviews())
@@ -87,22 +97,42 @@ def gather_user_data(pygh_user, username):
                         data["mentorship"].setdefault(pr_author, 0)
                         data["mentorship"][pr_author] += 1
 
+        # ------------------- Most important issue -------------------
+        try:
+            issues = list(repo.get_issues(state="open", sort="comments", direction="desc"))
+            if issues:
+                most_important = issues[0]
+                most_important_issue = {
+                    "title": most_important.title,
+                    "url": most_important.html_url,
+                    "comments": most_important.comments
+                }
+            else:
+                most_important_issue = None
+        except Exception:
+            most_important_issue = None
+
+        # ------------------- Save repo data -------------------
         data["repos"][repo_name] = {
             "repo_name": repo_name,
             "approvals": approvals,
-            "changes": changes,
             "comments": comments,
+            "pr_raised": pr_raised,
             "reviews_by_user": reviews_by_user,
+            "most_important_issue": most_important_issue
         }
+
         total_repos += 1
 
+    # ------------------- Summary -------------------
     data["summary"] = {
         "total_repos_count": total_repos,
-        "total_reviews_seen": total_reviews_seen,
+        "pr_raised": total_prs_raised,
         "total_approvals_by_user": total_approvals_by_user,
         "total_changes_by_user": total_changes_by_user,
         "mentored_users_count": len(data["mentorship"])
     }
+
     return data
 
 # ------------------- Routes -------------------
